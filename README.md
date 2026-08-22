@@ -1,5 +1,3 @@
-# Semiparametric Accelerated Gap-Time Models for Recurrent Events with an Effective Age Process
-
 ## Repository Structure
 
 ```
