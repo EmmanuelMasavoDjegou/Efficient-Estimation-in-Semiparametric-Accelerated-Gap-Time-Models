@@ -8,9 +8,9 @@ rng(45);
 
 % Parameters
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-n_values = [50]; % Sample sizes                                                                   
-B1 = 10;                                                                                           
-B2 = 25;                                                                                           
+n_values = [50, 100]; % Sample sizes                                                                   
+B1 = 100;                                                                                           
+B2 = 250;                                                                                           
 replications = 100; % Number of replications                                                        
 theta_0 = 0.8; % True parameter theta   
 % Weibull Parameters
