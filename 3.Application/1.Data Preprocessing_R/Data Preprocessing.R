@@ -157,4 +157,3 @@ length(unique(data_cp$id))
 
 # Save the filtered dataset to a CSV file
 write.csv(data_cp, "data_cp.csv", row.names = FALSE)
-
