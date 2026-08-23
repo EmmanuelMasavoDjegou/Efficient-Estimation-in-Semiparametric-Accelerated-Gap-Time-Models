@@ -2,7 +2,7 @@
 
 ```
 .
-├── literature_review/                      # Literature review materials
+├── literature_review/                      # Some literature review materials
 │
 ├── simulation/                             # Monte Carlo simulation study
 │   ├── simulation_sagt_model.m             # Data generation + model estimation (MATLAB)
