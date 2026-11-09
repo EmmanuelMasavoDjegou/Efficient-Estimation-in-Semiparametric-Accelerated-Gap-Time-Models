@@ -76,23 +76,23 @@ can be used directly.
 
 ```text
 .
-├── 2.Simulation/                          # Section 7: perfect-intervention (AGT) model
-│   ├── simulation_sagt_model.m              data generation, Gehan and log-rank fits,
-│   │                                        variance estimation, Lambda_0(1), Lambda_0(3)
-│   ├── simulation_results.csv               per-replication output (500 per sample size)
-│   ├── simulation_results_extended.csv      summary output by sample size
-│   ├── table1_simulation.R                  Table 1 from simulation_results.csv
-│   └── simulation_results_analysis.R        Figures 2-5 from the simulation output
+├── 2.Simulation/                           # Section 7: perfect-intervention (AGT) model
+│   ├── simulation_sagt_model.m               data generation, Gehan and log-rank fits, variance
+│   │                                         estimation, Lambda_0(1), Lambda_0(3), summary table
+│   ├── simulation_results.csv                per-replication output (500 per sample size)
+│   ├── simulation_results_extended.csv       summary by sample size: bias, SEs, Wald coverage
+│   ├── simulation_table1.R                   Table 1 from simulation_results.csv
+│   └── simulation_figures.R                  Figures 2-5 from simulation_results.csv
 │
-├── 3.Application/                         # Section 8: colorectal cancer readmissions
-│   ├── data_preprocessing.R                 frailtypack::readmission -> data_cp.csv
-│   ├── application_sagt_model.m             Gehan and log-rank fits, variances, Lambda_0
-│   ├── application_results.pdf              MATLAB output used in the paper
-│   └── application_results_analysis.R       Tables 2-3 and a forest plot
+├── 3.Application/                          # Section 8: colorectal cancer readmissions
+│   ├── application_preprocessing.R           frailtypack::readmission -> data_cp.csv
+│   ├── application_sagt_model.m              Gehan and log-rank fits, variances, Lambda_0
+│   ├── application_results.pdf               MATLAB output used in the paper
+│   └── application_tables.R                  Tables 2-3 and a forest plot
 │
 └── assets/
-    ├── header.png                         README banner
-    └── make_header.R                      draws header.png (ggplot2)
+    ├── header.png                            README banner
+    └── make_header.R                         draws header.png (ggplot2)
 ```
 
 ---
@@ -101,8 +101,8 @@ can be used directly.
 
 | Table | Contents | Produced by | Input |
 |---|---|---|---|
-| 1 | Simulation: bias, empirical SE, estimated SE, Wald coverage of `beta`, `Lambda_0(1)`, `Lambda_0(3)` | `2.Simulation/table1_simulation.R` | `simulation_results.csv` |
-| 2 | Covariate effects, SEs and 95% Wald CIs (Gehan; log-rank with Huang and Reg SEs) | `3.Application/application_results_analysis.R` | values from `application_results.pdf` |
+| 1 | Simulation: bias, empirical SE, estimated SE and Wald coverage for `beta`, `Lambda_0(1)`, `Lambda_0(3)` | `2.Simulation/simulation_table1.R`; the same numbers are written by `simulation_sagt_model.m` to `simulation_results_extended.csv` | `simulation_results.csv` |
+| 2 | Covariate effects, SEs and 95% Wald CIs (Gehan; log-rank with Huang and Reg SEs) | `3.Application/application_tables.R` | values from `application_results.pdf` |
 | 3 | `Lambda_0` at 180, 365 and 730 days with SEs and 95% CIs | same | same |
 
 ---
@@ -112,14 +112,12 @@ can be used directly.
 | Figure | Contents | Produced by | Output file |
 |---|---|---|---|
 | 1 | Gehan objective under Kijima's Model II, n = 10, 20, 50, 100 | not included in this repository | `Plot-3.png`, `Plot2.png`, `Plot3.png`, `Plot4.png` |
-| 2 | Densities of the `beta` estimates | `2.Simulation/simulation_results_analysis.R` | `figure4_density.png` |
+| 2 | Densities of the `beta` estimates | `2.Simulation/simulation_figures.R` | `figure4_density.png` |
 | 3 | Boxplots of the bias of `beta` | same | `figure1_bias_comparison.png` |
 | 4 | `Lambda_0(1)` and `Lambda_0(3)` estimates | same | `figure5_lambda_comparison.png` |
 | 5 | Densities of `Lambda_0(1)` and `Lambda_0(3)` | same | `figure8_lambda_density_faceted_t1_t3.png` |
 
-`simulation_results_analysis.R` also writes some exploratory figures that are not
-in the paper: `figure2_rmse.png`, `figure3_coverage.png`,
-`figure6_lambda_t1_density.png` and `figure7_lambda_t3_density.png`.
+The output file names are the ones used by `\includegraphics` in the manuscript.
 
 ---
 
@@ -129,11 +127,11 @@ in the paper: `figure2_rmse.png`, `figure3_coverage.png`,
   `unifrnd`). The fitting uses base MATLAB (`fminsearch`, `readtable`, `writetable`).
 * **R** with:
   * `frailtypack`, `survival`, `reReg`, `reda`, `dplyr` and `ggplot2` for the application.
-  * `ggplot2`, `dplyr`, `tidyr`, `kableExtra`, `gridExtra`, `RColorBrewer` and `viridis` for the simulation figures.
+  * `ggplot2`, `dplyr`, `gridExtra` and `viridis` for the simulation figures.
 
 ```r
 install.packages(c("frailtypack", "survival", "reReg", "reda", "dplyr", "ggplot2",
-                   "tidyr", "kableExtra", "gridExtra", "RColorBrewer", "viridis"))
+                   "gridExtra", "viridis"))
 ```
 
 The results in the paper were produced on a Linux machine, with the scripts run
@@ -150,29 +148,26 @@ file.
 
 ### Simulation (Section 7)
 
-1. **Fit the models.** Open `2.Simulation/simulation_sagt_model.m` and set the
-   design at the top of the file. The values in the file are defaults; the paper
-   uses:
+1. **Fit the models.** Run `2.Simulation/simulation_sagt_model.m`. The settings at
+   the top of the file are those of the paper:
 
-   | Setting | Value in the paper |
+   | Setting | Value |
    |---|---|
    | `n_values` | `[50, 100]` |
    | `replications` | `500` |
    | `B1`, `B2` | `100` |
    | `theta_0` | `0.8` |
-   | `alpha`, `gamma` | `1.5` (Weibull baseline) |
+   | `alpha`, `gamma` | `1.5` (Weibull baseline, `Lambda_0(t) = 1.5 t^1.5`) |
    | `tau_max` | `3.5` (follow-up ~ Unif(0, 3.5)) |
 
-   The covariate is Bernoulli(0.5), and the seed is fixed with `rng(45)`. Run the
-   script. It writes `simulation_results_p.csv` (per replication) and
-   `extended_simulation_results_p.csv` (summary).
-2. **Table 1.** Run `table1_simulation.R`. It prints Table 1 for n = 50 and n = 100.
-3. **Figures 2–5.** Run `simulation_results_analysis.R`.
+   The covariate is Bernoulli(0.5), and the seed is fixed with `rng(45)`. The
+   script writes `simulation_results.csv` (one row per replication) and
+   `simulation_results_extended.csv` (the summary reported in Table 1).
+2. **Table 1.** Run `simulation_table1.R`. It prints Table 1 for n = 50 and n = 100.
+3. **Figures 2–5.** Run `simulation_figures.R`.
 
-To build the tables and figures from the stored output without refitting, use
-the two CSV files in the folder. `table1_simulation.R` reads
-`simulation_results.csv`. `simulation_results_analysis.R` reads the `*_p.csv`
-names written by MATLAB, so copy the stored files to those names first.
+Steps 2 and 3 only read `simulation_results.csv`, so the tables and figures can be
+rebuilt from the stored output without refitting.
 
 Fitting is computationally intensive. Every replication runs a nonsmooth
 minimization, Huang's variance estimator and the resampling steps of the one-step
@@ -180,15 +175,15 @@ estimator, and the cost grows roughly quadratically with the sample size.
 
 ### Real data (Section 8)
 
-1. **Prepare the data.** Run `3.Application/data_preprocessing.R`. It loads
+1. **Prepare the data.** Run `3.Application/application_preprocessing.R`. It loads
    `readmission` from `frailtypack`, codes the covariates and writes `data_cp.csv`.
    The coding is chemo = 1 if treated, sex = 1 if female, and Dukes' stage = 1
    (A–B), 2 (C) or 3 (D). The analysis uses n = 397 patients after preprocessing.
-2. **Fit the models.** Run `3.Application/application_sagt_model.m` with
-   `B1 = B2 = 1500`. It prints the estimates, the variance matrices and
+2. **Fit the models.** Run `3.Application/application_sagt_model.m`
+   (`B1 = B2 = 1500`). It prints the estimates, the variance matrices and
    `Lambda_0` at 180, 365 and 730 days, as in `application_results.pdf`.
-3. **Tables 2–3.** Run `3.Application/application_results_analysis.R`. It prints
-   both tables and draws a forest plot of the covariate effects.
+3. **Tables 2–3.** Run `3.Application/application_tables.R`. It prints both tables
+   and draws a forest plot of the covariate effects.
 
 ---
 
@@ -207,7 +202,11 @@ estimator, and the cost grows roughly quadratically with the sample size.
 returns `Gamma = n * (theta_tilde - theta_hat)(theta_tilde - theta_hat)'`, the
 asymptotic variance of `sqrt(n) * (theta_hat - theta_0)`. The same holds for the
 `Sigma_Lambda_2` quantities of `Lambda_0`. The standard error of an estimate is
-therefore `sqrt(variance / n)`. Both R table scripts apply this scaling.
+therefore `sqrt(variance / n)`. The summary section of `simulation_sagt_model.m`
+and both R table scripts apply this scaling.
+
+**Coverage.** Wald coverage is the proportion of replications whose interval,
+estimate ± 1.96 SE, contains the true value.
 
 **Sign convention in the application.** MATLAB returns `theta_hat`, the
 coefficient in `T = T_tilde * exp(-theta' X)`. Table 2 reports `-theta_hat`, the
@@ -223,6 +222,10 @@ hospitalization. See Section 8 of the paper for the clinical discussion.
 **Optimizer.** The Gehan objective is minimized with the Nelder–Mead simplex
 algorithm (`fminsearch`). The objective is piecewise linear, so check
 convergence from several starting values when applying the code to new data.
+
+**Reproducibility of the application.** `application_sagt_model.m` does not set a
+random seed, so the resampling-based variance estimates can differ slightly from
+`application_results.pdf` on a rerun.
 
 **Death as censoring.** In the application, follow-up ends at death for some
 patients. Death is treated as censoring, which matches the noninformative

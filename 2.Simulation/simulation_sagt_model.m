@@ -10,14 +10,14 @@ rng(45);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 n_values = [50, 100]; % Sample sizes                                                                   
 B1 = 100;                                                                                           
-B2 = 250;                                                                                           
-replications = 100; % Number of replications                                                        
+B2 = 100;
+replications = 500; % Number of replications
 theta_0 = 0.8; % True parameter theta   
 % Weibull Parameters
 alpha = 1.5;
 gamma = 1.5;                                                                                       
 Lambda_0_dist = [1.5, 7.79]; % Baseline cumulative hazard functions at t = 1, 3              
-% Store the baseline cumulative hazard functions in a cell array                                                                                  
+% Lambda_0(t) = alpha * t^gamma, so Lambda_0(1) = 1.5 and Lambda_0(3) = 1.5 * 3^1.5 (rounded to 7.79)                                                                                  
 tau_max = 3.5; % Maximum value for tau                                                                                         %  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1665,192 +1665,49 @@ disp('Results for theta_p:');
 disp(results_p);
 
 % Save results to CSV files
-writetable(results_p, 'simulation_results_p.csv');
+writetable(results_p, 'simulation_results.csv');
 
 
-% Initialize tables to store the bias, standard deviation, sqrt(EstimatedGamma), and coverage results
-extended_results_p = table();
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  SUMMARY BY SAMPLE SIZE (Table 1 of the paper)                          %
+%  Gamma and Sigma_Lambda_2 estimate the variance of                      %
+%  sqrt(n) * (estimate - truth), so SE = sqrt(variance / n).               %
+%  Wald coverage is the proportion of replications whose interval          %
+%  estimate +/- 1.96 * SE contains the true value.                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+summary_names = {'SampleSize', ...
+    'AbsBias_beta_G',  'EmpSE_beta_G',  'MeanSE_beta_G_Huang',  'WaldCov_beta_G_Huang', ...
+    'AbsBias_beta_LR', 'EmpSE_beta_LR', 'MeanSE_beta_LR_Huang', 'WaldCov_beta_LR_Huang', ...
+    'MeanSE_beta_LR_Reg', 'WaldCov_beta_LR_Reg', ...
+    'AbsBias_Lambda1_G',  'EmpSE_Lambda1_G',  'MeanSE_Lambda1_G',  'WaldCov_Lambda1_G', ...
+    'AbsBias_Lambda3_G',  'EmpSE_Lambda3_G',  'MeanSE_Lambda3_G',  'WaldCov_Lambda3_G', ...
+    'AbsBias_Lambda1_LR', 'EmpSE_Lambda1_LR', 'MeanSE_Lambda1_LR', 'WaldCov_Lambda1_LR', ...
+    'AbsBias_Lambda3_LR', 'EmpSE_Lambda3_LR', 'MeanSE_Lambda3_LR', 'WaldCov_Lambda3_LR'};
 
-% Loop over sample sizes
+summary_values = [];
 for n = n_values
-    % Loop over distributions
-        % Filter results for current sample size
-        current_results_p = results_p(results_p.SampleSize == n,:);
-
-        % Compute for theta_p
-        % Compute the sample mean of EstimatedThetaP
-        mean_estimated_theta_g_p = mean(current_results_p.EstimatedThetaG_P, 'omitnan');
-        mean_estimated_Lambda_g_p_t1 = mean(current_results_p.EstimatedLambdaG_P1, 'omitnan');
-        mean_estimated_Lambda_g_p_t2 = mean(current_results_p.EstimatedLambdaG_P2, 'omitnan');
-        mean_estimated_theta_lr_p = mean(current_results_p.EstimatedThetaLR_P, 'omitnan');
-        mean_estimated_Lambda_lr_p_t1 = mean(current_results_p.EstimatedLambdaLR_P1, 'omitnan');
-        mean_estimated_Lambda_lr_p_t2 = mean(current_results_p.EstimatedLambdaLR_P2, 'omitnan');
-        
-
-        % Compute the sample standard deviation of EstimatedThetaP
-        std_estimated_theta_g_p = std(current_results_p.EstimatedThetaG_P, 'omitnan');
-        std_estimated_Lambda_g_p_t1 = std(current_results_p.EstimatedLambdaG_P1, 'omitnan');
-        std_estimated_Lambda_g_p_t2 = std(current_results_p.EstimatedLambdaG_P2, 'omitnan');
-        std_estimated_theta_lr_p = std(current_results_p.EstimatedThetaLR_P, 'omitnan');
-        std_estimated_Lambda_lr_p_t1 = std(current_results_p.EstimatedLambdaLR_P1, 'omitnan');
-        std_estimated_Lambda_lr_p_t2 = std(current_results_p.EstimatedLambdaLR_P2, 'omitnan');
-
-
-        % Compute the mean of sqrt(EstimatedGammaP)
-        mean_sqrt_gamma_g_p = mean(sqrt(current_results_p.EstimatedGammaG_P), 'omitnan');
-        mean_sqrt_gammaThm3_g_p = NaN;
-        mean_sqrt_Sigma_Lambda_2_g_p_t1 = mean(sqrt(current_results_p.EstimatedSigmaLambda2G_P1), 'omitnan');
-        mean_sqrt_Sigma_Lambda_2_g_p_t2 = mean(sqrt(current_results_p.EstimatedSigmaLambda2G_P2), 'omitnan');
-        
-
-        mean_sqrt_gammahuang_lr_p = mean(sqrt(current_results_p.EstimatedGammaHuangLR_P), 'omitnan');
-        mean_sqrt_gamma_lr_p = mean(sqrt(current_results_p.EstimatedGammaLR_P), 'omitnan');
-        mean_sqrt_Sigma_Lambda_2_lr_p_t1 = mean(sqrt(current_results_p.EstimatedSigmaLambda2LR_P1), 'omitnan');
-        mean_sqrt_Sigma_Lambda_2_lr_p_t2 = mean(sqrt(current_results_p.EstimatedSigmaLambda2LR_P2), 'omitnan');
-        
-        
-        % Compute the bias relative to true theta value
-        bias_g_p = mean_estimated_theta_g_p - theta_0;
-        true_Lambda_0_t1 = Lambda_0_dist(1); % true value at t = 0.5
-        bias_Lambda_g_p_t1 = mean_estimated_Lambda_g_p_t1 - true_Lambda_0_t1;
-        true_Lambda_0_t2 = Lambda_0_dist(2); % true value at t = 1.5
-        bias_Lambda_g_p_t2 = mean_estimated_Lambda_g_p_t2 - true_Lambda_0_t2;  
-        bias_lr_p = mean_estimated_theta_lr_p - theta_0;
-        bias_Lambda_lr_p_t1 = mean_estimated_Lambda_lr_p_t1 - true_Lambda_0_t1;
-        bias_Lambda_lr_p_t2 = mean_estimated_Lambda_lr_p_t2 - true_Lambda_0_t2;  
-
-        % Wald Method for 95% Coverage for theta_p
-        % Confidence interval: EstimatedThetaP ± 1.96 * sqrt(EstimatedGammaP / n)
-        ci_wald_lower_g_p = mean_estimated_theta_g_p - 1.96 * mean_sqrt_gamma_g_p /sqrt(n);
-        ci_wald_upper_g_p = mean_estimated_theta_g_p + 1.96 * mean_sqrt_gamma_g_p/sqrt(n);
-
-        % Z value for 95% confidence (z_alpha/2 for alpha=0.05 is approximately 1.96)
-        z_alpha_2 = 1.96;
-
-        % Calculate confidence intervals using the provided formula
-        ci_wald_lower_Lambda_g_p_t1 = mean_estimated_Lambda_g_p_t1 * exp(-z_alpha_2 * mean_sqrt_Sigma_Lambda_2_g_p_t1 / (sqrt(n) * mean_estimated_Lambda_g_p_t1));
-        ci_wald_upper_Lambda_g_p_t1 = mean_estimated_Lambda_g_p_t1 * exp(z_alpha_2 * mean_sqrt_Sigma_Lambda_2_g_p_t1 / (sqrt(n) * mean_estimated_Lambda_g_p_t1));
-
-        ci_wald_lower_Lambda_g_p_t2 = mean_estimated_Lambda_g_p_t2 * exp(-z_alpha_2 * mean_sqrt_Sigma_Lambda_2_g_p_t2 / (sqrt(n) * mean_estimated_Lambda_g_p_t2));
-        ci_wald_upper_Lambda_g_p_t2 = mean_estimated_Lambda_g_p_t2 * exp(z_alpha_2 *  mean_sqrt_Sigma_Lambda_2_g_p_t2 / (sqrt(n) * mean_estimated_Lambda_g_p_t2));
-
-        
-        ci_wald_lower_lr_p = mean_estimated_theta_lr_p - 1.96 * mean_sqrt_gamma_lr_p /sqrt(n);
-        ci_wald_upper_lr_p = mean_estimated_theta_lr_p + 1.96 * mean_sqrt_gamma_lr_p /sqrt(n);
-
-
-        % Calculate confidence intervals using the provided formula
-        ci_wald_lower_Lambda_lr_p_t1 = mean_estimated_Lambda_lr_p_t1 * exp(-z_alpha_2 * mean_sqrt_Sigma_Lambda_2_lr_p_t1 / (sqrt(n) * mean_estimated_Lambda_lr_p_t1));
-        ci_wald_upper_Lambda_lr_p_t1 = mean_estimated_Lambda_lr_p_t1 * exp(z_alpha_2 *  mean_sqrt_Sigma_Lambda_2_lr_p_t1 / (sqrt(n) * mean_estimated_Lambda_lr_p_t1));
-
-        ci_wald_lower_Lambda_lr_p_t2 = mean_estimated_Lambda_lr_p_t2 * exp(-z_alpha_2 * mean_sqrt_Sigma_Lambda_2_lr_p_t2/ (sqrt(n) * mean_estimated_Lambda_lr_p_t2));
-        ci_wald_upper_Lambda_lr_p_t2 = mean_estimated_Lambda_lr_p_t2 * exp(z_alpha_2 *  mean_sqrt_Sigma_Lambda_2_lr_p_t2/ (sqrt(n) * mean_estimated_Lambda_lr_p_t2));
-        
-
-        % Determine Wald coverage for theta_p
-        coverage_wald_g_p = mean(current_results_p.EstimatedThetaG_P >= ci_wald_lower_g_p & current_results_p.EstimatedThetaG_P <= ci_wald_upper_g_p);
-        
-        coverage_wald_Lambda_g_p_t1 = mean(current_results_p.EstimatedLambdaG_P1 >= ci_wald_lower_Lambda_g_p_t1 & current_results_p.EstimatedLambdaG_P1 <= ci_wald_upper_Lambda_g_p_t1);
-        coverage_wald_Lambda_g_p_t2 = mean(current_results_p.EstimatedLambdaG_P2 >= ci_wald_lower_Lambda_g_p_t2 & current_results_p.EstimatedLambdaG_P2 <= ci_wald_upper_Lambda_g_p_t2);
-              
-        coverage_wald_lr_p = mean(current_results_p.EstimatedThetaLR_P >= ci_wald_lower_lr_p & current_results_p.EstimatedThetaLR_P <= ci_wald_upper_lr_p, 'omitnan');
-
-        coverage_wald_Lambda_lr_p_t1 = mean(current_results_p.EstimatedLambdaLR_P1 >= ci_wald_lower_Lambda_lr_p_t1 & current_results_p.EstimatedLambdaLR_P1 <= ci_wald_upper_Lambda_lr_p_t1);
-        coverage_wald_Lambda_lr_p_t2 = mean(current_results_p.EstimatedLambdaLR_P2 >= ci_wald_lower_Lambda_lr_p_t2 & current_results_p.EstimatedLambdaLR_P2 <= ci_wald_upper_Lambda_lr_p_t2);
-        
-
-        % Percentile Method for 95% Coverage for theta_p
-        % Compute percentiles
-        ci_percentile_lower_g_p = prctile(current_results_p.EstimatedThetaG_P, 2.5);
-        ci_percentile_upper_g_p = prctile(current_results_p.EstimatedThetaG_P, 97.5);
-
-        ci_percentile_lower_Lambda_g_p_t1 = prctile(current_results_p.EstimatedLambdaG_P1, 2.5);
-        ci_percentile_upper_Lambda_g_p_t1 = prctile(current_results_p.EstimatedLambdaG_P1, 97.5);
-
-        ci_percentile_lower_Lambda_g_p_t2 = prctile(current_results_p.EstimatedLambdaG_P2, 2.5);
-        ci_percentile_upper_Lambda_g_p_t2 = prctile(current_results_p.EstimatedLambdaG_P2, 97.5);
-
-
-        ci_percentile_lower_lr_p = prctile(current_results_p.EstimatedThetaLR_P, 2.5);
-        ci_percentile_upper_lr_p = prctile(current_results_p.EstimatedThetaLR_P, 97.5);
-
-
-        ci_percentile_lower_Lambda_lr_p_t1 = prctile(current_results_p.EstimatedLambdaLR_P1, 2.5);
-        ci_percentile_upper_Lambda_lr_p_t1 = prctile(current_results_p.EstimatedLambdaLR_P1, 97.5);
-
-        ci_percentile_lower_Lambda_lr_p_t2 = prctile(current_results_p.EstimatedLambdaLR_P2, 2.5);
-        ci_percentile_upper_Lambda_lr_p_t2 = prctile(current_results_p.EstimatedLambdaLR_P2, 97.5);
-
-
-
-
-        % Determine Percentile coverage for theta_p
-        coverage_percentile_g_p = mean(current_results_p.EstimatedThetaG_P >= ci_percentile_lower_g_p & current_results_p.EstimatedThetaG_P <= ci_percentile_upper_g_p);
-        
-        % Determine Percentile coverage for Lambda_p
-        coverage_percentile_Lambda_g_p_t1 = mean(current_results_p.EstimatedLambdaG_P1 >= ci_percentile_lower_Lambda_g_p_t1 & current_results_p.EstimatedLambdaG_P1 <= ci_percentile_upper_Lambda_g_p_t1);
-        coverage_percentile_Lambda_g_p_t2 = mean(current_results_p.EstimatedLambdaG_P2 >= ci_percentile_lower_Lambda_g_p_t2 & current_results_p.EstimatedLambdaG_P2 <= ci_percentile_upper_Lambda_g_p_t2);
-       
-       % Determine Percentile coverage for Lambda_p
-        coverage_percentile_Lambda_lr_p_t1 = mean(current_results_p.EstimatedLambdaLR_P1 >= ci_percentile_lower_Lambda_lr_p_t1 & current_results_p.EstimatedLambdaLR_P1 <= ci_percentile_upper_Lambda_lr_p_t1);
-        coverage_percentile_Lambda_lr_p_t2 = mean(current_results_p.EstimatedLambdaLR_P2 >= ci_percentile_lower_Lambda_lr_p_t2 & current_results_p.EstimatedLambdaLR_P2 <= ci_percentile_upper_Lambda_lr_p_t2);
-        
-        
-        % Determine Percentile coverage for theta_p
-        coverage_percentile_lr_p = mean(current_results_p.EstimatedThetaLR_P >= ci_percentile_lower_lr_p & current_results_p.EstimatedThetaLR_P <= ci_percentile_upper_lr_p, 'omitnan');
-
-        
-        % Store the results for theta_p
-        temp_results_p = table( ...
-            n, ...
-            abs(bias_g_p), ...
-            std_estimated_theta_g_p, ...
-            mean_sqrt_gammaThm3_g_p, ...
-            mean_sqrt_gamma_g_p, ...
-            coverage_wald_g_p, ...
-            coverage_percentile_g_p, ...
-            abs(bias_Lambda_g_p_t1), ...
-            std_estimated_Lambda_g_p_t1,...
-            mean_sqrt_Sigma_Lambda_2_g_p_t1,...
-            coverage_wald_Lambda_g_p_t1,...
-            coverage_percentile_Lambda_g_p_t1,...
-            abs(bias_Lambda_g_p_t2),...
-            std_estimated_Lambda_g_p_t2, ...
-            mean_sqrt_Sigma_Lambda_2_g_p_t2,...
-            coverage_wald_Lambda_g_p_t2,...
-            coverage_percentile_Lambda_g_p_t2,...
-            abs(bias_lr_p), ...
-            std_estimated_theta_lr_p,...
-            mean_sqrt_gamma_lr_p, ...
-            mean_sqrt_gammahuang_lr_p, ...
-            coverage_wald_lr_p, ...
-            coverage_percentile_lr_p, ...
-            abs(bias_Lambda_lr_p_t1), ...
-            std_estimated_Lambda_lr_p_t1,...
-            mean_sqrt_Sigma_Lambda_2_lr_p_t1,...
-            coverage_wald_Lambda_lr_p_t1,...
-            coverage_percentile_Lambda_lr_p_t1,...
-            abs(bias_Lambda_lr_p_t2),...
-            std_estimated_Lambda_lr_p_t2, ...
-            mean_sqrt_Sigma_Lambda_2_lr_p_t2,...
-            coverage_wald_Lambda_lr_p_t2,...
-            coverage_percentile_Lambda_lr_p_t2,...
-            'VariableNames', {'SampleSize', 'AbsoluteBiasG_P', 'StandardDeviationG_P', 'MeanSqrtGammaTh3G_P', 'MeanSqrtGammaG_P', 'CoverageWaldG_P', 'CoveragePercentileG_P', ...
-            'AbsoluteBiasLambdaG_P1', 'StandardDeviationLambdaG_P1', 'MeanSqrtSigmaLambdaG_P1', 'CoverageWaldLambdaG_P1', 'CoveragePercentileLambdaG_P1', 'AbsoluteBiasLambdaG_P2', 'StandardDeviationLambdaG_P2', 'MeanSqrtSigmaLambdaG_P2', 'CoverageWaldLambdaG_P2', 'CoveragePercentileLambdaG_P2', 'AbsoluteBiasLR_P', 'StandardDeviationLR_P', 'MeanSqrtGammaLR_P', ...
-            'MeanSqrtGammaHuangLR_P', 'CoverageWaldLR_P', 'CoveragePercentileLR_P', 'AbsoluteBiasLambdaLR_P1', 'StandardDeviationLambdaLR_P1', 'MeanSqrtSigmaLambdaLR_P1', 'CoverageWaldLambdaLR_P1', 'CoveragePercentileLambdaLR_P1', 'AbsoluteBiasLambdaLR_P2', 'StandardDeviationLambdaLR_P2', 'MeanSqrtSigmaLambdaLR_P2', 'CoverageWaldLambdaLR_P2', 'CoveragePercentileLambdaLR_P2'});
-
-        % Append to the extended_results_p table
-        extended_results_p = [extended_results_p; temp_results_p];
+    cur = results_p(results_p.SampleSize == n, :);
+    s_g   = summarise_estimator(cur.EstimatedThetaG_P,    cur.EstimatedGammaG_P,          theta_0,          n);
+    s_lrh = summarise_estimator(cur.EstimatedThetaLR_P,   cur.EstimatedGammaHuangLR_P,    theta_0,          n);
+    s_lrr = summarise_estimator(cur.EstimatedThetaLR_P,   cur.EstimatedGammaLR_P,         theta_0,          n);
+    s_g1  = summarise_estimator(cur.EstimatedLambdaG_P1,  cur.EstimatedSigmaLambda2G_P1,  Lambda_0_dist(1), n);
+    s_g3  = summarise_estimator(cur.EstimatedLambdaG_P2,  cur.EstimatedSigmaLambda2G_P2,  Lambda_0_dist(2), n);
+    s_l1  = summarise_estimator(cur.EstimatedLambdaLR_P1, cur.EstimatedSigmaLambda2LR_P1, Lambda_0_dist(1), n);
+    s_l3  = summarise_estimator(cur.EstimatedLambdaLR_P2, cur.EstimatedSigmaLambda2LR_P2, Lambda_0_dist(2), n);
+    summary_values = [summary_values; n, s_g, s_lrh, s_lrr(3:4), s_g1, s_g3, s_l1, s_l3]; %#ok<AGROW>
 end
 
-% Reorder rows by Distribution and then by SampleSize
-extended_results_p = sortrows(extended_results_p, 'SampleSize');
-
-% Display the results
-disp('Extended Results for theta_p:');
+extended_results_p = array2table(summary_values, 'VariableNames', summary_names);
+disp('Summary by sample size (Table 1):');
 disp(extended_results_p);
+writetable(extended_results_p, 'simulation_results_extended.csv');
 
 
-% Save the extended results to CSV files
-writetable(extended_results_p, 'extended_simulation_results_p.csv');
+function out = summarise_estimator(est, v, truth, n)
+    % absolute bias, empirical SE, mean estimated SE, Wald coverage
+    ok  = isfinite(est) & isfinite(v);
+    est = est(ok);
+    se  = sqrt(v(ok) / n);
+    out = [abs(mean(est) - truth), std(est), mean(se), mean(abs(est - truth) <= 1.96 * se)];
+end

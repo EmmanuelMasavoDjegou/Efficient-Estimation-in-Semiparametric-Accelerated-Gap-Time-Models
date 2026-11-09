@@ -1,3 +1,12 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% sAGT model for the colorectal cancer readmission data (Section 8)      %
+% Input: data_cp.csv from application_preprocessing.R (n = 397 patients).       %
+% Output: the estimates, Gamma and Sigma_Lambda_2 printed to the console %
+% (see application_results.pdf). Gamma and Sigma_Lambda_2 are variances  %
+% of sqrt(n)*(estimate - truth); application_tables.R converts them to   %
+% standard errors, sqrt(variance / n), and builds Tables 2 and 3.        %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Parameters
 alpha = 1.5;                                                                                       
 gamma = 1.5;                                                                                       
