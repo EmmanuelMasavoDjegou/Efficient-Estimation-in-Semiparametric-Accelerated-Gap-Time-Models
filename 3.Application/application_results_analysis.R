@@ -1,54 +1,42 @@
-# Function to calculate p-value and confidence interval
-calculate_p_value_and_ci <- function(estimate, se, sample_size, confidence_level = 0.95) {
-  # Degrees of freedom
-  df <- sample_size - 1
-  
-  # Calculate the t-statistic
-  t_statistic <- estimate / se
-  
-  # Calculate the p-value (two-tailed test)
-  p_value <- 2 * pt(-abs(t_statistic), df)
-  
-  # Calculate the critical t-value for the confidence interval
-  alpha <- 1 - confidence_level
-  critical_t <- qt(1 - alpha / 2, df)
-  
-  # Calculate the margin of error
-  margin_of_error <- critical_t * se
-  
-  # Calculate the confidence interval
-  ci_lower <- estimate - margin_of_error
-  ci_upper <- estimate + margin_of_error
-  
-  # Return the results
-  list(
-    p_value = p_value,
-    confidence_interval = c(ci_lower, ci_upper)
-  )
+# =============================================================================
+# Application results: covariate effects, standard errors and 95% Wald CIs
+# Values are taken from application_results.pdf (output of application_sagt_model.m).
+#
+# The MATLAB code returns Gamma = n * (theta_tilde - theta_hat)(...)', the
+# asymptotic variance of sqrt(n) * (theta_hat - theta_0). Standard errors of
+# theta_hat are therefore sqrt(diag(Gamma) / n).
+# Estimates are reported as effects on the log gap time, i.e. -theta_hat.
+# =============================================================================
+
+n      <- 397                                   # patients after preprocessing
+labels <- c("Chemo", "Sex", "Dukes")
+
+theta_G <- c(0.1459, -0.5984, 0.9343)           # Gehan
+theta_L <- c(0.2046, -0.3335, 0.6956)           # log-rank (one-step)
+
+gamma_G_huang <- c(7.9659, 7.9225, 3.4168)      # diag of Gamma, Gehan (Huang)
+gamma_L_huang <- c(3.8175, 5.0255, 3.4994)      # diag of Gamma, log-rank (Huang)
+gamma_L_reg   <- c(2.1078, 3.6909, 1.9195)      # diag of Gamma, log-rank (Reg)
+
+wald <- function(theta, gamma_diag, n, level = 0.95) {
+  est <- -theta                                 # effect on the log gap time
+  se  <- sqrt(gamma_diag / n)
+  z   <- qnorm(1 - (1 - level) / 2)
+  data.frame(estimate = est, se = se, lower = est - z * se, upper = est + z * se,
+             p_value = 2 * pnorm(-abs(est / se)))
 }
 
-# Example usage
-estimate <-  0.1161   # Example estimate
-se <- sqrt(19.6678)        # Example standard error
-sample_size <- 50  # Example sample size
+res_G  <- wald(theta_G, gamma_G_huang, n)
+res_LH <- wald(theta_L, gamma_L_huang, n)
+res_LR <- wald(theta_L, gamma_L_reg,   n)
+print(cbind(labels, round(res_G, 4)))
+print(cbind(labels, round(res_LH, 4)))
+print(cbind(labels, round(res_LR, 4)))
 
-results <- calculate_p_value_and_ci(estimate, se, sample_size)
-print(results)
-
-
-# Data
-labels <- c("Chemo", "Sex", "Dukes")
-theta_L <- c(0.36, -0.14, 0.25)
-theta_G <- c(0.33, -0.15, 0.28)
-ci_L <- matrix(c(-2.53, 3.26, -3.12, 2.83, -2.00, 2.51), ncol = 2, byrow = TRUE)
-ci_G <- matrix(c(-2.83, 3.50, -3.44, 3.12, -3.67, 4.23), ncol = 2, byrow = TRUE)
-
-# Data
-labels <- c("Chemo", "Sex", "Dukes")
-theta_L <- c(0.36, -0.14, 0.25)
-theta_G <- c(0.33, -0.15, 0.28)
-ci_L <- matrix(c(-2.53, 3.26, -3.12, 2.83, -2.00, 2.51), ncol = 2, byrow = TRUE)
-ci_G <- matrix(c(-2.83, 3.50, -3.44, 3.12, -3.67, 4.23), ncol = 2, byrow = TRUE)
+theta_L <- res_LH$estimate
+theta_G <- res_G$estimate
+ci_L <- as.matrix(res_LH[, c("lower", "upper")])
+ci_G <- as.matrix(res_G[,  c("lower", "upper")])
 
 # Create data frame
 df <- data.frame(
@@ -65,7 +53,7 @@ library(ggplot2)
 ggplot(df, aes(x = estimate, y = labels, color = method)) +
   geom_point(size = 3) +
   geom_errorbarh(aes(xmin = lower, xmax = upper), height = 0.2) +
-  labs(x = "Estimate (\u03B8)", title = "Forest Plot of Regression Estimates") +
+  labs(x = "Effect on log gap time", title = "Forest plot of covariate effects (95% Wald CIs)") +
   theme_minimal() +
   theme(legend.title = element_blank())
 
