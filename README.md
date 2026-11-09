@@ -1,19 +1,8 @@
 <p align="center">
-  <img src="assets/header.svg" alt="Effective age under minimal, imperfect and perfect intervention" width="100%">
+  <img src="assets/header.png" alt="Effective age under minimal, imperfect and perfect intervention" width="100%">
 </p>
 
 <h1 align="center">Efficient Estimation in Semiparametric Accelerated Gap-Time Models for Recurrent Event Data</h1>
-
-<p align="center">
-  <b>Emmanuel Djegou</b> &nbsp;·&nbsp; <b>Akim Adekpedjou</b><br>
-  Department of Mathematics and Statistics, Missouri University of Science and Technology
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/MATLAB-estimation-0076A8" alt="MATLAB">
-  <img src="https://img.shields.io/badge/R-analysis%20%26%20figures-276DC3" alt="R">
-  <img src="https://img.shields.io/badge/status-manuscript%20under%20review-5C4D8A" alt="Status">
-</p>
 
 This repository contains the code for the simulation study and the real-data application in the paper *Efficient Estimation in Semiparametric Accelerated Gap-Time Models for Recurrent Event Data*.
 
@@ -64,7 +53,7 @@ where $\mathcal{E}_i(s)$ is the effective age and $\lambda_0$ is an unspecified 
 │   └── application_results.pdf            # Estimation output
 │
 └── assets/
-    └── header.svg                         # README header image
+    └── header.png                         # README header image
 ```
 
 ---
@@ -124,4 +113,4 @@ If you use this code, please cite:
 
 ## Contact
 
-Akim Adekpedjou (corresponding author), akima@mst.edu
+Emmanuel Djegou (corresponding author), emmanueldjego5@gmail.com
