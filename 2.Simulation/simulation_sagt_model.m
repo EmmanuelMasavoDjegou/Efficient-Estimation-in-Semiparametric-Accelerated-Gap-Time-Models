@@ -22,7 +22,7 @@ tau_max = 3.5; % Maximum value for tau                                          
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function data_cp = generate_recurrent_data_cp(n, tau_max, alpha, gamma)
-    % Distribution: V ~ Weibull(1.5, 1.5), Z ~ N(0, 1)
+    % Distribution: V ~ Weibull(1.5, 1.5), Z ~ Bin(1, 0.5)
     Z = binornd(1, 0.5, [n, 1]);
     
     tau = unifrnd(0, tau_max, [n, 1]);
