@@ -1,115 +1,240 @@
 <p align="center">
-  <img src="assets/header.png" alt="Effective age under minimal, imperfect and perfect intervention" width="100%">
+  <img src="assets/header.png" alt="Accelerated effective age gap-time models" width="100%">
 </p>
 
-<h1 align="center">Efficient Estimation in Semiparametric Accelerated Gap-Time Models for Recurrent Event Data</h1>
-
-This repository contains the code for the simulation study and the real-data application in the paper *Efficient Estimation in Semiparametric Accelerated Gap-Time Models for Recurrent Event Data*.
+<p align="center">
+  <a href="#method">Method</a> &middot;
+  <a href="#repository-structure">Structure</a> &middot;
+  <a href="#which-script-produces-which-table">Tables</a> &middot;
+  <a href="#which-script-produces-which-figure">Figures</a> &middot;
+  <a href="#requirements">Requirements</a> &middot;
+  <a href="#reproducing-the-results">Reproducing</a> &middot;
+  <a href="#notes-on-use">Notes</a> &middot;
+  <a href="#citation">Citation</a>
+</p>
 
 ---
 
-## About the paper
+Semiparametric accelerated gap-time models for recurrent event data in which
+**covariates rescale an effective age process**. A subject ages faster or slower
+than a baseline subject with the same intervention history, by a factor set by its
+covariates. The baseline hazard is left unspecified. Interventions between events
+may be minimal, perfect or imperfect, and the semiparametric AFT and AGT models are
+special cases.
 
-**The problem.** Accelerated gap-time (AGT) models let covariates stretch or compress the time between recurrent events, but they assume every intervention restores a subject to a like-new state. Effective age models allow imperfect interventions, but there covariates act on the hazard, not on the time scale. No semiparametric model let covariates accelerate time when interventions are imperfect.
+Code accompanying *Efficient Estimation in Semiparametric Accelerated Gap-Time
+Models for Recurrent Event Data* by Emmanuel Djegou and Akim Adekpedjou. The
+MATLAB scripts fit the model; the R scripts prepare the data and build the
+tables and figures of the paper.
 
-**The model.** Covariates rescale the effective age itself. Subject $i$ ages $e^{\beta_0^\top X_i}$ times faster than a baseline subject with the same intervention history, and the intensity of the next event is
+---
 
-$$\lambda_0\bigl\lbrace\mathcal{E}_i(s)\,e^{\beta_0^\top X_i}\bigr\rbrace\,e^{\beta_0^\top X_i},$$
+## Method
 
-where $\mathcal{E}_i(s)$ is the effective age and $\lambda_0$ is an unspecified baseline hazard.
+For subject `i` with time-invariant covariates `X_i` and effective age
+`E_i(s)`:
 
-| Intervention | Effective age $\mathcal{E}_i(s)$ | Special case |
+```
+intensity at calendar time s  =  lambda_0( E_i(s) * exp(beta' X_i) ) * exp(beta' X_i)
+```
+
+* `lambda_0` is an unknown baseline hazard; `beta` is the regression parameter.
+* `E_i(s)` encodes the intervention mechanism:
+
+| Intervention | Effective age `E_i(s)` | Special case |
 |---|---|---|
-| Minimal (as bad as old) | calendar time $s$ | semiparametric AFT model |
-| Perfect (as good as new) | time since last event | semiparametric AGT model |
-| Imperfect | e.g. Brown–Proschan, Kijima-type, linear effective ages | new |
+| Minimal (as bad as old) | calendar time `s` | semiparametric AFT model |
+| Perfect (as good as new) | time since the last event | semiparametric AGT model |
+| Imperfect | Brown–Proschan, Block–Borges–Savits, Kijima-type, linear effective ages | new |
 
-**Main contributions**
+Because `beta` enters the argument of the unknown baseline hazard, neither
+rank-based AGT methods nor profile likelihood methods for effective age models
+can be used directly.
 
-- A change-of-variable from calendar time to the accelerated effective age, using doubly-indexed processes. It yields an at-risk process that depends on $\beta$.
-- The efficient score and semiparametric information bounds for $\beta_0$ and the cumulative baseline hazard $\Lambda_0$.
-- Weighted rank estimating functions derived from the efficient score:
-  - The **Gehan** weight gives the gradient of a convex objective, which provides a consistent starting value.
-  - A **one-step** update gives estimators under general weights such as **log-rank**.
-- Consistency and asymptotic normality, with numerical variance estimators (Huang's method and a regression-based alternative).
-- A Nelson–Aalen-type estimator of $\Lambda_0$ with a Gaussian process limit, and a Hausman-type goodness-of-fit test.
+**Estimation.**
+
+1. **Change of time scale.** A change of variable from calendar time to the
+   accelerated effective age, using doubly-indexed processes, gives an at-risk
+   process that depends on `beta`.
+2. **Efficient score.** The efficient score and information bounds are derived
+   for `beta` and the cumulative baseline hazard `Lambda_0`. The efficient weight
+   is `psi(r) = 1 + r * lambda_0'(r) / lambda_0(r)`.
+3. **Weighted estimating functions.** The unknown `psi` is replaced by
+   data-driven weights.
+   * The **Gehan** weight gives the gradient of a convex objective. Minimizing it
+     gives `beta_G`.
+   * A **one-step** update from `beta_G` gives estimators under general weights
+     such as the **log-rank** weight, which is efficient under a Weibull baseline.
+4. **Variance estimation.** Huang's numerical method is used for both estimators.
+   A regression-based alternative is used for the one-step estimator.
+5. **Baseline hazard.** `Lambda_0(t)` is estimated with a Nelson–Aalen-type
+   estimator.
 
 ---
 
 ## Repository structure
 
-```
+```text
 .
-├── 2.Simulation/                          # Monte Carlo simulation study (perfect-intervention model)
-│   ├── simulation_sagt_model.m            # Data generation + Gehan and log-rank estimation (MATLAB)
-│   ├── simulation_results_analysis.R      # Tables and figures from the simulation output (R)
-│   ├── simulation_results.csv             # Per-replication estimates and variance estimates
-│   └── simulation_results_extended.csv    # Summary statistics by sample size (bias, SD, SE, coverage)
+├── 2.Simulation/                          # Section 7: perfect-intervention (AGT) model
+│   ├── simulation_sagt_model.m              data generation, Gehan and log-rank fits,
+│   │                                        variance estimation, Lambda_0(1), Lambda_0(3)
+│   ├── simulation_results.csv               per-replication output (500 per sample size)
+│   ├── simulation_results_extended.csv      summary output by sample size
+│   ├── table1_simulation.R                  Table 1 from simulation_results.csv
+│   └── simulation_results_analysis.R        Figures 2-5 from the simulation output
 │
-├── 3.Application/                         # Colorectal cancer readmission data
-│   ├── data_preprocessing.R               # Builds the model-ready data set data_cp.csv (R)
-│   ├── application_sagt_model.m           # Model estimation (MATLAB)
-│   ├── application_results_analysis.R     # Tables and figures from the application output (R)
-│   └── application_results.pdf            # Estimation output
+├── 3.Application/                         # Section 8: colorectal cancer readmissions
+│   ├── data_preprocessing.R                 frailtypack::readmission -> data_cp.csv
+│   ├── application_sagt_model.m             Gehan and log-rank fits, variances, Lambda_0
+│   ├── application_results.pdf              MATLAB output used in the paper
+│   └── application_results_analysis.R       Tables 2-3 and a forest plot
 │
-└── assets/
-    └── header.png                         # README header image
+└── assets/header.png
 ```
+
+---
+
+## Which script produces which table
+
+| Table | Contents | Produced by | Input |
+|---|---|---|---|
+| 1 | Simulation: bias, empirical SE, estimated SE, Wald coverage of `beta`, `Lambda_0(1)`, `Lambda_0(3)` | `2.Simulation/table1_simulation.R` | `simulation_results.csv` |
+| 2 | Covariate effects, SEs and 95% Wald CIs (Gehan; log-rank with Huang and Reg SEs) | `3.Application/application_results_analysis.R` | values from `application_results.pdf` |
+| 3 | `Lambda_0` at 180, 365 and 730 days with SEs and 95% CIs | same | same |
+
+---
+
+## Which script produces which figure
+
+| Figure | Contents | Produced by | Output file |
+|---|---|---|---|
+| 1 | Gehan objective under Kijima's Model II, n = 10, 20, 50, 100 | not included in this repository | `Plot-3.png`, `Plot2.png`, `Plot3.png`, `Plot4.png` |
+| 2 | Densities of the `beta` estimates | `2.Simulation/simulation_results_analysis.R` | `figure4_density.png` |
+| 3 | Boxplots of the bias of `beta` | same | `figure1_bias_comparison.png` |
+| 4 | `Lambda_0(1)` and `Lambda_0(3)` estimates | same | `figure5_lambda_comparison.png` |
+| 5 | Densities of `Lambda_0(1)` and `Lambda_0(3)` | same | `figure8_lambda_density_faceted_t1_t3.png` |
+
+`simulation_results_analysis.R` also writes some exploratory figures that are not
+in the paper: `figure2_rmse.png`, `figure3_coverage.png`,
+`figure6_lambda_t1_density.png` and `figure7_lambda_t3_density.png`.
 
 ---
 
 ## Requirements
 
-- **MATLAB.** Base MATLAB is enough for the core routines (`fminsearch`, `readtable`, `writetable`). Data generation uses `binornd` and `unifrnd`, which require the Statistics and Machine Learning Toolbox.
-- **R** with the packages:
-  - `frailtypack`, `survival`, `reReg`, `reda`, `dplyr`, `ggplot2` (application)
-  - `ggplot2`, `dplyr`, `tidyr`, `kableExtra`, `gridExtra`, `RColorBrewer`, `viridis` (simulation figures)
+* **MATLAB** with the Statistics and Machine Learning Toolbox (`binornd`,
+  `unifrnd`). The fitting uses base MATLAB (`fminsearch`, `readtable`, `writetable`).
+* **R** with:
+  * `frailtypack`, `survival`, `reReg`, `reda`, `dplyr` and `ggplot2` for the application.
+  * `ggplot2`, `dplyr`, `tidyr`, `kableExtra`, `gridExtra`, `RColorBrewer` and `viridis` for the simulation figures.
+
+```r
+install.packages(c("frailtypack", "survival", "reReg", "reda", "dplyr", "ggplot2",
+                   "tidyr", "kableExtra", "gridExtra", "RColorBrewer", "viridis"))
+```
+
+The results in the paper were produced on a Linux machine, with the scripts run
+interactively from the MATLAB desktop and RStudio.
 
 ---
 
 ## Reproducing the results
 
-### Simulation study
+All scripts are run interactively. In MATLAB or RStudio, open the script, set the
+working directory to the script's own folder (MATLAB: *Current Folder*; RStudio:
+*Session → Set Working Directory → To Source File Location*), and run the whole
+file.
 
-1. Open `2.Simulation/simulation_sagt_model.m`. The settings are at the top of the file:
-   - `n_values`: the sample sizes
-   - `replications`
-   - `B1`, `B2`: the resampling sizes
-   - the Weibull parameters `alpha` and `gamma`
-   - `tau_max`: the upper bound of the uniform follow-up time
-2. Run the script. It writes:
-   - `simulation_results_p.csv`: per-replication output
-   - `extended_simulation_results_p.csv`: summary output
+### Simulation (Section 7)
 
-   The files `simulation_results.csv` and `simulation_results_extended.csv` in this folder are the outputs used in the paper.
-3. Run `simulation_results_analysis.R` in the same folder to produce the tables and figures. It reads the two `*_p.csv` files, so rename the provided files if you want to reuse them without rerunning the simulation.
+1. **Fit the models.** Open `2.Simulation/simulation_sagt_model.m` and set the
+   design at the top of the file. The values in the file are defaults; the paper
+   uses:
 
-> Fitting is computationally intensive. Each replication involves a nonsmooth minimization, Huang's variance estimator and resampling for the one-step estimator, and the cost grows roughly quadratically with the sample size.
+   | Setting | Value in the paper |
+   |---|---|
+   | `n_values` | `[50, 100]` |
+   | `replications` | `500` |
+   | `B1`, `B2` | `100` |
+   | `theta_0` | `0.8` |
+   | `alpha`, `gamma` | `1.5` (Weibull baseline) |
+   | `tau_max` | `3.5` (follow-up ~ Unif(0, 3.5)) |
 
-### Real-data application
+   The covariate is Bernoulli(0.5), and the seed is fixed with `rng(45)`. Run the
+   script. It writes `simulation_results_p.csv` (per replication) and
+   `extended_simulation_results_p.csv` (summary).
+2. **Table 1.** Run `table1_simulation.R`. It prints Table 1 for n = 50 and n = 100.
+3. **Figures 2–5.** Run `simulation_results_analysis.R`.
 
-The application uses the `readmission` data from the R package [`frailtypack`](https://CRAN.R-project.org/package=frailtypack): hospital readmissions of 403 colorectal cancer patients (González et al., 2005). The covariates are chemotherapy, Dukes' stage and sex.
+To build the tables and figures from the stored output without refitting, use
+the two CSV files in the folder. `table1_simulation.R` reads
+`simulation_results.csv`. `simulation_results_analysis.R` reads the `*_p.csv`
+names written by MATLAB, so copy the stored files to those names first.
 
-1. Run `3.Application/data_preprocessing.R`. It writes `data_cp.csv`.
-2. Run `3.Application/application_sagt_model.m` in the same folder.
-3. Run `3.Application/application_results_analysis.R` for the tables and figures.
+Fitting is computationally intensive. Every replication runs a nonsmooth
+minimization, Huang's variance estimator and the resampling steps of the one-step
+estimator, and the cost grows roughly quadratically with the sample size.
 
-The analysis uses the perfect-intervention (AGT) specification as a working model, for illustration and as a benchmark for this data set. See Section 8 of the paper for a discussion of this choice.
+### Real data (Section 8)
+
+1. **Prepare the data.** Run `3.Application/data_preprocessing.R`. It loads
+   `readmission` from `frailtypack`, codes the covariates and writes `data_cp.csv`.
+   The coding is chemo = 1 if treated, sex = 1 if female, and Dukes' stage = 1
+   (A–B), 2 (C) or 3 (D). The analysis uses n = 397 patients after preprocessing.
+2. **Fit the models.** Run `3.Application/application_sagt_model.m` with
+   `B1 = B2 = 1500`. It prints the estimates, the variance matrices and
+   `Lambda_0` at 180, 365 and 730 days, as in `application_results.pdf`.
+3. **Tables 2–3.** Run `3.Application/application_results_analysis.R`. It prints
+   both tables and draws a forest plot of the covariate effects.
+
+---
+
+## Data availability
+
+| Data set | Subjects | Source |
+|---|---|---|
+| Simulation | n = 50, 100; 500 replications each | generated by `simulation_sagt_model.m` |
+| Colorectal cancer readmissions | 403 patients (397 analysed) | R package `frailtypack`, data set `readmission` (González et al., 2005) |
+
+---
+
+## Notes on use
+
+**Standard errors are on the √n scale in the MATLAB output.** The MATLAB code
+returns `Gamma = n * (theta_tilde - theta_hat)(theta_tilde - theta_hat)'`, the
+asymptotic variance of `sqrt(n) * (theta_hat - theta_0)`. The same holds for the
+`Sigma_Lambda_2` quantities of `Lambda_0`. The standard error of an estimate is
+therefore `sqrt(variance / n)`. Both R table scripts apply this scaling.
+
+**Sign convention in the application.** MATLAB returns `theta_hat`, the
+coefficient in `T = T_tilde * exp(-theta' X)`. Table 2 reports `-theta_hat`, the
+effect on the log gap time, so negative values mean shorter gaps between
+readmissions.
+
+**Perfect intervention is a working assumption.** Both the simulation and the
+application use the perfect-intervention (AGT) effective age. The simulation
+does so to validate the method against a well-understood special case. In the
+application, the data contain no information on recovery after each
+hospitalization. See Section 8 of the paper for the clinical discussion.
+
+**Optimizer.** The Gehan objective is minimized with the Nelder–Mead simplex
+algorithm (`fminsearch`). The objective is piecewise linear, so check
+convergence from several starting values when applying the code to new data.
+
+**Death as censoring.** In the application, follow-up ends at death for some
+patients. Death is treated as censoring, which matches the noninformative
+follow-up assumption only if death is unrelated to readmission given the
+covariates.
 
 ---
 
 ## Citation
 
-If you use this code, please cite:
+If you use this code, please cite the paper:
 
-```bibtex
-@unpublished{DjegouAdekpedjou2026,
-  author = {Djegou, Emmanuel and Adekpedjou, Akim},
-  title  = {Efficient Estimation in Semiparametric Accelerated Gap-Time Models for Recurrent Event Data},
-  year   = {2026},
-  note   = {Manuscript under review}
-}
-```
+> **E. Djegou** & A. Adekpedjou. *Efficient Estimation in Semiparametric
+> Accelerated Gap-Time Models for Recurrent Event Data.* Manuscript under review.
 
 ## Contact
 
