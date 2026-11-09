@@ -90,7 +90,9 @@ can be used directly.
 │   ├── application_results.pdf              MATLAB output used in the paper
 │   └── application_results_analysis.R       Tables 2-3 and a forest plot
 │
-└── assets/header.png
+└── assets/
+    ├── header.png                         README banner
+    └── make_header.R                      draws header.png (ggplot2)
 ```
 
 ---
