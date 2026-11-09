@@ -52,18 +52,20 @@ leg <- data.frame(kind  = c("abao", "imp", "agan"),
 
 g <- ggplot() +
   annotation_raster(bg, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, interpolate = TRUE) +
-  ## left: title, tagline, keywords
-  annotate("text", x = 1.6, y = 6.2, label = "Accelerated Effective Age", hjust = 0, vjust = 0,
-           colour = "white", size = 10.1, fontface = "bold", family = "sans") +
-  annotate("text", x = 1.6, y = 5.0, label = "Gap-Time Models", hjust = 0, vjust = 0,
-           colour = "white", size = 10.1, fontface = "bold", family = "sans") +
-  annotate("text", x = 1.6, y = 3.7, hjust = 0, vjust = 0, colour = "#D9D4F0", size = 4.8,
+  ## left: paper title, tagline, keywords
+  annotate("text", x = 1.6, y = 7.05, label = "Efficient Estimation in Semiparametric", hjust = 0, vjust = 0,
+           colour = "white", size = 7.3, fontface = "bold", family = "sans") +
+  annotate("text", x = 1.6, y = 6.15, label = "Accelerated Gap-Time Models", hjust = 0, vjust = 0,
+           colour = "white", size = 7.3, fontface = "bold", family = "sans") +
+  annotate("text", x = 1.6, y = 5.25, label = "for Recurrent Event Data", hjust = 0, vjust = 0,
+           colour = "white", size = 7.3, fontface = "bold", family = "sans") +
+  annotate("text", x = 1.6, y = 3.85, hjust = 0, vjust = 0, colour = "#D9D4F0", size = 4.55,
            label = "Covariates rescale the effective age, so subjects age") +
-  annotate("text", x = 1.6, y = 3.05, hjust = 0, vjust = 0, colour = "#D9D4F0", size = 4.8,
+  annotate("text", x = 1.6, y = 3.225, hjust = 0, vjust = 0, colour = "#D9D4F0", size = 4.55,
            label = "faster or slower under imperfect interventions.") +
-  annotate("text", x = 1.6, y = 1.8, hjust = 0, vjust = 0, colour = grid_col, size = 3.7,
+  annotate("text", x = 1.6, y = 1.9, hjust = 0, vjust = 0, colour = grid_col, size = 3.7,
            label = "Semiparametric models | Accelerated gap-time model | Efficient estimation") +
-  annotate("text", x = 1.6, y = 1.25, hjust = 0, vjust = 0, colour = grid_col, size = 3.7,
+  annotate("text", x = 1.6, y = 1.35, hjust = 0, vjust = 0, colour = grid_col, size = 3.7,
            label = "Survival analysis | Recurrent events | Incomplete follow-up") +
   ## right: axes, event markers, effective age paths, legend
   annotate("segment", x = x0, xend = x1 + 0.2, y = yb, yend = yb, colour = grid_col, linewidth = 0.5) +
