@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/header.png" alt="Accelerated effective age gap-time models" width="100%">
+  <img src="1.Docs/header.png" alt="Accelerated effective age gap-time models" width="100%">
 </p>
 
 <p align="center">
@@ -90,7 +90,7 @@ can be used directly.
 │   ├── application_results.pdf               MATLAB output used in the paper
 │   └── application_tables.R                  Tables 2-3 and a forest plot
 │
-└── assets/
+└── 1.Docs/
     ├── header.png                            README banner
     └── make_header.R                         draws header.png (ggplot2)
 ```
